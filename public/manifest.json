@@ -14,10 +14,12 @@
   "content_scripts": [
     {
       "matches": [
-        "https://github.com/?code*"
+        "https://github.com/?code*",
+        "https://open.kattis.com/submissions/*"
       ],
       "js": [
-        "auth.js"
+        "auth.js",
+        "kattis.js"
       ],
       "run_at": "document_idle"
     }
