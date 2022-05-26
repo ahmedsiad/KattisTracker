@@ -11,11 +11,16 @@ import InputLabel from '@material-ui/core/InputLabel';
 const Settings = (props) => {
     const [repos, setRepos] = useState([]);
     const [uploadRepo, setUploadRepo] = useState("");
+    const [lastSync, setLastSync] = useState("");
 
     const handleRepoChange = (event) => {
         setUploadRepo(event.target.value);
         chrome.storage.local.set({ repo_name: event.target.value });
     };
+
+    const handleClear = (event) => {
+        chrome.storage.local.set({ submission_data: null });
+    }
 
     useEffect(() => {
         chrome.storage.local.get("access_token", (data) => {
@@ -37,6 +42,11 @@ const Settings = (props) => {
         chrome.storage.local.get("repo_name", (data) => {
             if (data && data.repo_name) {
                 setUploadRepo(data.repo_name);
+            }
+        });
+        chrome.storage.local.get("last_sync", (data) => {
+            if (data && data.last_sync) {
+                setLastSync(data.last_sync);
             }
         });
     }, []);
@@ -62,7 +72,11 @@ const Settings = (props) => {
                     <Typography variant="h6">Clear ALL Data</Typography>
                 </Grid>
                 <Grid item xs={12}>
-                    <Button variant="outlined" color="secondary">Clear Data</Button>
+                    <Button variant="outlined" color="secondary" onClick={handleClear}>Clear Data</Button>
+                </Grid>
+
+                <Grid item xs={12}>
+                    {lastSync && <Typography>Last Synced: {lastSync}</Typography>}
                 </Grid>
             </Grid>
         </div>
