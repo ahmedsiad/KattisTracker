@@ -20,7 +20,7 @@ chrome.storage.local.get("sent_github", (data) => {
             return response.json();
         }).then((data) => {
             const access_token = data.access_token;
-            const sync = new Date();
+            const sync = new Date().toString();
 
             chrome.storage.local.set({ access_token: access_token }, () => {
                 alert("Your account has been successfully authorized! Kattis Tracker will now track your Kattis solutions.");
