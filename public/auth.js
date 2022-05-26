@@ -1,6 +1,6 @@
 const SECRETS = {
     client_id: "5e5df0d6da9ae0a3e442",
-    client_secret: "2829e4dec34a55b5a4a2d8d340ecbb2b4e997cbc"
+    client_secret: "2829e4dec34a55b5a4a2d8d340ecbb2b4e997cbc" // you will need to make your own OAuth app and get the client id/secret
 };
 
 

@@ -132,8 +132,8 @@ const Stats = (props) => {
                     <Grid container spacing={2} style={{ width: "100%", margin: 0, marginTop: "15px", textAlign: "center" }}>
                         <Grid item xs={1} />
                         <Grid item xs={3}>
-                            <Tooltip title="Difficulty greater than 5.0" arrow placement="top">
-                                <Typography><RedText component="span">Hards</RedText></Typography>
+                            <Tooltip title="Difficulty less than 3.0" arrow placement="top">
+                                <Typography><GreenText component="span">Easys</GreenText></Typography>
                             </Tooltip>
                         </Grid>
                         <Grid item xs={4}>
@@ -142,24 +142,31 @@ const Stats = (props) => {
                             </Tooltip>
                         </Grid>
                         <Grid item xs={3}>
-                            <Tooltip title="Difficulty less than 3.0" arrow placement="top">
-                                <Typography><GreenText component="span">Easys</GreenText></Typography>
+                            <Tooltip title="Difficulty greater than 5.0" arrow placement="top">
+                                <Typography><RedText component="span">Hards</RedText></Typography>
                             </Tooltip>
                         </Grid>
                         <Grid item xs={1} />
 
                         <Grid item xs={1} />
                         <Grid item xs={3}>
-                            <Typography>{hardProblems}</Typography>
+                            <Typography>{easyProblems}</Typography>
                         </Grid>
                         <Grid item xs={4}>
                             <Typography>{mediumProblems}</Typography>
                         </Grid>
                         <Grid item xs={3}>
-                            <Typography>{easyProblems}</Typography>
+                            <Typography>{hardProblems}</Typography>
                         </Grid>
                     </Grid>
                 </div>
+            }
+            {empty &&
+                <Grid container spacing={2} style={{ width: "100%", margin: 0, minHeight: "300px", textAlign: "center", alignItems: "center" }}>
+                    <Grid item xs={12}>
+                        <Typography>You haven't submitted any problems!</Typography>
+                    </Grid>
+                </Grid>
             }
         </div>
     );
