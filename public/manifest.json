@@ -1,11 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Kattis Tracker",
-  "description": "Automatically upload Kattis problem solutions to GitHub.",
-  "version": "0.1",
+  "description": "Automatically upload Kattis problem solutions to a GitHub repository of your choice and track your progress with this extension!",
+  "version": "0.1.0",
   "action": {
     "default_popup": "index.html",
     "default_title": "Open dashboard"
+  },
+  "icons": {
+    "48": "logo48.png",
+    "128": "logo128.png"
   },
   "permissions": [
     "tabs",
