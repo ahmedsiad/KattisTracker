@@ -1,15 +1,25 @@
-const langs = {
-    "Python 3": ".py",
-    "Python 2": ".py",
-    "C++": ".cpp",
-    "C": ".c"
-};
-
 const comments = {
     "Python 3": "#",
     "Python 2": "#",
     "C++": "//",
-    "C": "//"
+    "C": "//",
+    "C#": "//",
+    "COBOL": "*>",
+    "F#": "///",
+    "Go": "//",
+    "Haskell": "--",
+    "Java": "//",
+    "Node.js": "//",
+    "SpiderMonkey": "//",
+    "Kotlin": "//",
+    "Common Lisp": ";",
+    "Objective-C": "//",
+    "OCaml": "**",
+    "Pascal": "//",
+    "PHP": "//",
+    "Prolog": "%",
+    "Ruby": "#",
+    "Rust": "//"
 };
 
 const intervalId = setInterval(pollStatus, 2000);
@@ -32,13 +42,13 @@ function pollStatus() {
         
         const timeStr = timestamp.split(" ");
         if (timeStr.length === 1 && checkTimestamp(timeStr[0])) {
-            upload(id, timestamp, problem, problemUrl, cpu, language);
+            upload(id, problem, problemUrl, cpu, language);
         }
     }
 }
 
 
-function upload(id, timestamp, problem, problemUrl, cpu, language) {
+function upload(id, problem, problemUrl, cpu, language) {
     clearInterval(intervalId);
     chrome.storage.local.get(["repo_name", "access_token"], (data) => {
 
@@ -59,7 +69,10 @@ function upload(id, timestamp, problem, problemUrl, cpu, language) {
             const authorExists = authorElem.children[0].innerText !== "Source:";
             const author = (authorExists) ? authorElem.children[1].innerText : "No author";
             const source = (authorExists) ? elems[3].children[1].children[1].innerText : authorElem.children[1].innerText;
-            const fileExtension = langs[language];
+
+            const fileTable = document.getElementById("submission_files");
+            const submissionName = fileTable.children[2].firstElementChild.firstElementChild.innerText.trim();
+            const fileExtension = "." + submissionName.split(".")[1];
             const cm = comments[language];
 
             const lines = document.getElementsByClassName("ace_line");
@@ -94,7 +107,32 @@ function upload(id, timestamp, problem, problemUrl, cpu, language) {
                 sendPost(url, data.access_token, body);
             }).catch((error) => {
                 sendPost(url, data.access_token, body);
-            })
+            });
+
+            chrome.storage.local.get("submission_data", (d) => {
+                let new_data = [];
+                if (d.submission_data) {
+                    const submission_data = JSON.parse(d.submission_data).data;
+                    for (let sub of submission_data) {
+                        if (sub.problem_id === problemId) {
+                            return;
+                        }
+                    }
+                    new_data = submission_data;
+                }
+                const new_sub = {
+                    submission_id: id,
+                    problem_id: problemId,
+                    problem_name: problem,
+                    timestamp: Date.now(),
+                    language: language,
+                    difficulty: parseFloat(difficulty)
+                };
+                new_data.push(new_sub);
+                const obj = { data: new_data };
+
+                chrome.storage.local.set({submission_data: JSON.stringify(obj)});
+            });
 
         });
     });
