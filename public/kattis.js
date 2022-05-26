@@ -26,7 +26,7 @@ const intervalId = setInterval(pollStatus, 2000);
 
 setTimeout(() => {
     clearInterval(intervalId);
-}, 10000);
+}, 20000);
 
 function pollStatus() {
     const judgeTable = document.getElementById("judge_table");
@@ -90,7 +90,7 @@ function upload(id, problem, problemUrl, cpu, language) {
             let url = `https://api.github.com/repos/${data.repo_name}/contents/${problemId}/${problemId + fileExtension}`;
             let body = {
                 message: `"${problem}", Difficulty: ${difficulty}, comitted via Kattis Tracker`,
-                content: btoa(codeStr)
+                content: btoa(unescape(encodeURIComponent(codeStr)))
             };
 
             // check if file already exists
