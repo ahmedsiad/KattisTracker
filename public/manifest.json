@@ -12,7 +12,6 @@
     "128": "logo128.png"
   },
   "permissions": [
-    "tabs",
     "storage"
   ],
   "content_scripts": [
