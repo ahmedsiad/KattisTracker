@@ -41,7 +41,7 @@ function pollStatus() {
         const language = tableBody.children[5].innerText;
         
         const timeStr = timestamp.split(" ");
-        if (timeStr.length === 1 && checkTimestamp(timeStr[0])) {
+        if (timeStr.length === 1) {
             upload(id, problem, problemUrl, cpu, language);
         }
     }

@@ -76,7 +76,7 @@ const Settings = (props) => {
                 </Grid>
 
                 <Grid item xs={12}>
-                    {lastSync && <Typography>Last Synced: {lastSync}</Typography>}
+                    {lastSync && <Typography variant="body2">Last Synced: {lastSync}</Typography>}
                 </Grid>
             </Grid>
         </div>

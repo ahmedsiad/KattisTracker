@@ -64,7 +64,7 @@ const Stats = (props) => {
 
                     if (prob.difficulty > hardest) {
                         hardest = prob.difficulty;
-                        hardestP = { problem_name: prob.problem_name, url: prob.problem_id };
+                        hardestP = { problem_name: prob.problem_name, url: "https://open.kattis.com/problems/" + prob.problem_id };
                     }
 
                     if (streaks[streaks.length - 1] === 0) {
