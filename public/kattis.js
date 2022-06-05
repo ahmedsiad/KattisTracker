@@ -30,7 +30,7 @@ setTimeout(() => {
 
 function pollStatus() {
     const judgeTable = document.getElementById("judge_table");
-    const tableBody = judgeTable.children[1].firstElementChild;
+    const tableBody = judgeTable.getElementsByTagName("tbody")[0].firstElementChild;
     const statusText = tableBody.children[3].innerText;
     if (statusText.startsWith("Accepted")) {
         const id = tableBody.children[0].innerText;
@@ -58,20 +58,21 @@ function upload(id, problem, problemUrl, cpu, language) {
             const parser = new DOMParser();
             const page = parser.parseFromString(res, "text/html");
             
-            const elems = page.getElementsByClassName("sidebar-info");
+            const elems = page.getElementsByClassName("attribute_list-book")[0];
             
-            const problemId = elems[2].children[0].lastChild.data.trim();
-            const tle = elems[2].children[1].lastChild.data.trim();
-            const memory = elems[2].children[2].lastChild.data.trim();
-            const difficulty = elems[2].children[3].lastChild.innerText.trim();
+            const tle = elems.children[0].lastElementChild.innerHTML.trim();
+            const memory = elems.children[1].lastElementChild.innerHTML.trim();
+            const difficulty = elems.children[2].lastElementChild.firstElementChild.innerHTML.trim();
 
-            const authorElem = elems[3].children[0];
-            const authorExists = authorElem.children[0].innerText !== "Source:";
-            const author = (authorExists) ? authorElem.children[1].innerText : "No author";
-            const source = (authorExists) ? elems[3].children[1].children[1].innerText : authorElem.children[1].innerText;
+            const authorElem = elems.children[3];
+            const authorExists = authorElem.children[0].innerText.trim() !== "Source";
+            console.log(authorElem.children[0].innerText.trim());
+            const author = (authorExists) ? authorElem.children[1].innerText.trim() : "No author";
+            const source = (authorExists) ? elems.children[4].children[1].innerText.trim() : authorElem.children[1].innerText.trim();
 
-            const fileTable = document.getElementById("submission_files");
-            const submissionName = fileTable.children[2].firstElementChild.firstElementChild.innerText.trim();
+            const fileTable = document.getElementsByClassName("file_source-content-file")[0];
+            const problemId = fileTable.firstElementChild.id.split(".")[0];
+            const submissionName = fileTable.firstElementChild.innerHTML.trim();
             const fileExtension = "." + submissionName.split(".")[1];
             const cm = comments[language];
 
