@@ -51,81 +51,82 @@ function pollStatus() {
 function upload(id, problem, problemUrl, cpu, language) {
     clearInterval(intervalId);
     chrome.storage.local.get(["repo_name", "access_token"], (data) => {
+        if (data && data.access_token) {
+            fetch(problemUrl).then((response) => {
+                return response.text();
+            }).then((res) => {
+                const parser = new DOMParser();
+                const page = parser.parseFromString(res, "text/html");
+                
+                const elems = page.getElementsByClassName("attribute_list-book")[0];
+                
+                const tle = elems.children[0].lastElementChild.innerHTML.trim();
+                const memory = elems.children[1].lastElementChild.innerHTML.trim();
+                const difficulty = elems.children[2].lastElementChild.firstElementChild.innerHTML.trim();
 
-        fetch(problemUrl).then((response) => {
-            return response.text();
-        }).then((res) => {
-            const parser = new DOMParser();
-            const page = parser.parseFromString(res, "text/html");
-            
-            const elems = page.getElementsByClassName("attribute_list-book")[0];
-            
-            const tle = elems.children[0].lastElementChild.innerHTML.trim();
-            const memory = elems.children[1].lastElementChild.innerHTML.trim();
-            const difficulty = elems.children[2].lastElementChild.firstElementChild.innerHTML.trim();
+                const authorElem = elems.children[4];
+                const authorExists = authorElem.children[0].innerText.trim() !== "Source";
+                console.log(authorElem.children[0].innerText.trim());
+                const author = (authorExists) ? authorElem.children[1].innerText.trim() : "No author";
+                const source = (authorExists) ? elems.children[5].children[1].innerText.trim() : authorElem.children[1].innerText.trim();
 
-            const authorElem = elems.children[3];
-            const authorExists = authorElem.children[0].innerText.trim() !== "Source";
-            console.log(authorElem.children[0].innerText.trim());
-            const author = (authorExists) ? authorElem.children[1].innerText.trim() : "No author";
-            const source = (authorExists) ? elems.children[4].children[1].innerText.trim() : authorElem.children[1].innerText.trim();
+                const fileTable = document.getElementsByClassName("file_source-content-file")[0];
+                const problemId = problemUrl.split("/").pop();
+                const submissionName = fileTable.firstElementChild.innerHTML.trim();
+                const fileExtension = "." + submissionName.split(".")[1];
+                const cm = comments[language];
 
-            const fileTable = document.getElementsByClassName("file_source-content-file")[0];
-            const problemId = problemUrl.split("/").pop();
-            const submissionName = fileTable.firstElementChild.innerHTML.trim();
-            const fileExtension = "." + submissionName.split(".")[1];
-            const cm = comments[language];
+                const lines = document.getElementsByClassName("ace_line");
+                let codeStr = `${cm} ***${problem} Solution***\n`;
+                codeStr += `${cm} Difficulty: ${difficulty}\n`;
+                codeStr += `${cm} Time Limit: ${tle}, Memory Limit: ${memory}\n`;
+                codeStr += `${cm} CPU Time: ${cpu}\n`;
+                codeStr += `${cm} Author: ${author}\n`;
+                codeStr += `${cm} Source: ${source}\n`;
+                codeStr += `${cm} Link: ${problemUrl}\n\n\n`;
 
-            const lines = document.getElementsByClassName("ace_line");
-            let codeStr = `${cm} ***${problem} Solution***\n`;
-            codeStr += `${cm} Difficulty: ${difficulty}\n`;
-            codeStr += `${cm} Time Limit: ${tle}, Memory Limit: ${memory}\n`;
-            codeStr += `${cm} CPU Time: ${cpu}\n`;
-            codeStr += `${cm} Author: ${author}\n`;
-            codeStr += `${cm} Source: ${source}\n`;
-            codeStr += `${cm} Link: ${problemUrl}\n\n\n`;
-
-            for (let line of lines) {
-                codeStr += line.innerText;
-            }
-            let url = `https://api.github.com/repos/${data.repo_name}/contents/${problemId}/${problemId + fileExtension}`;
-            let body = {
-                message: `"${problem}", Difficulty: ${difficulty}, comitted via Kattis Tracker`,
-                content: btoa(unescape(encodeURIComponent(codeStr)))
-            };
-
-            chrome.storage.local.get("submission_data", (d) => {
-                let new_data = [];
-                if (d.submission_data) {
-                    const submission_data = JSON.parse(d.submission_data).data;
-                    const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
-                    if (same_problems.length > 0) {
-                        if (parseInt(same_problems[0].submission_id) < parseInt(id)) {
-                            commit(url, data.access_token, body);
-                            same_problems[0].submission_id = id;
-                            const obj = { data: submission_data };
-                            chrome.storage.local.set({submission_data: JSON.stringify(obj)});
-                        }
-                        return;
-                    }
-                    commit(url, data.access_token, body);
-                    new_data = submission_data;
+                for (let line of lines) {
+                    codeStr += line.innerText;
                 }
-                const new_sub = {
-                    submission_id: id,
-                    problem_id: problemId,
-                    problem_name: problem,
-                    timestamp: Date.now(),
-                    language: language,
-                    difficulty: parseFloat(difficulty)
+                let url = `https://api.github.com/repos/${data.repo_name}/contents/${problemId}/${problemId + fileExtension}`;
+                let body = {
+                    message: `"${problem}", Difficulty: ${difficulty}, comitted via Kattis Tracker`,
+                    content: btoa(unescape(encodeURIComponent(codeStr)))
                 };
-                new_data.push(new_sub);
-                const obj = { data: new_data };
 
-                chrome.storage.local.set({submission_data: JSON.stringify(obj)});
+                chrome.storage.local.get("submission_data", (d) => {
+                    let new_data = [];
+                    if (d.submission_data) {
+                        const submission_data = JSON.parse(d.submission_data).data;
+                        const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
+                        if (same_problems.length > 0) {
+                            if (parseInt(same_problems[0].submission_id) < parseInt(id)) {
+                                commit(url, data.access_token, body);
+                                same_problems[0].submission_id = id;
+                                const obj = { data: submission_data };
+                                chrome.storage.local.set({submission_data: JSON.stringify(obj)});
+                            }
+                            return;
+                        }
+                        commit(url, data.access_token, body);
+                        new_data = submission_data;
+                    }
+                    const new_sub = {
+                        submission_id: id,
+                        problem_id: problemId,
+                        problem_name: problem,
+                        timestamp: Date.now(),
+                        language: language,
+                        difficulty: parseFloat(difficulty)
+                    };
+                    new_data.push(new_sub);
+                    const obj = { data: new_data };
+
+                    chrome.storage.local.set({submission_data: JSON.stringify(obj)});
+                });
+
             });
-
-        });
+        }
     });
 }
 
