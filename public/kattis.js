@@ -66,7 +66,6 @@ function upload(id, problem, problemUrl, cpu, language) {
 
                 const authorElem = elems.children[4];
                 const authorExists = authorElem.children[0].innerText.trim() !== "Source";
-                console.log(authorElem.children[0].innerText.trim());
                 const author = (authorExists) ? authorElem.children[1].innerText.trim() : "No author";
                 const source = (authorExists) ? elems.children[5].children[1].innerText.trim() : authorElem.children[1].innerText.trim();
 
@@ -96,7 +95,7 @@ function upload(id, problem, problemUrl, cpu, language) {
 
                 chrome.storage.local.get("submission_data", (d) => {
                     let new_data = [];
-                    if (d.submission_data) {
+                    if (d && d.submission_data) {
                         const submission_data = JSON.parse(d.submission_data).data;
                         const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
                         if (same_problems.length > 0) {
@@ -108,9 +107,9 @@ function upload(id, problem, problemUrl, cpu, language) {
                             }
                             return;
                         }
-                        commit(url, data.access_token, body);
                         new_data = submission_data;
                     }
+                    commit(url, data.access_token, body);
                     const new_sub = {
                         submission_id: id,
                         problem_id: problemId,
