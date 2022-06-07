@@ -71,7 +71,7 @@ function upload(id, problem, problemUrl, cpu, language) {
             const source = (authorExists) ? elems.children[4].children[1].innerText.trim() : authorElem.children[1].innerText.trim();
 
             const fileTable = document.getElementsByClassName("file_source-content-file")[0];
-            const problemId = fileTable.firstElementChild.id.split(".")[0];
+            const problemId = problemUrl.split("/").pop();
             const submissionName = fileTable.firstElementChild.innerHTML.trim();
             const fileExtension = "." + submissionName.split(".")[1];
             const cm = comments[language];
