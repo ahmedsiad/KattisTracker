@@ -94,31 +94,21 @@ function upload(id, problem, problemUrl, cpu, language) {
                 content: btoa(unescape(encodeURIComponent(codeStr)))
             };
 
-            // check if file already exists
-            fetch(url, {
-                method: "GET",
-                headers: { Authorization: `token ${data.access_token}` }
-            }).then((response) => {
-                if (response.ok) {
-                    return response.json();
-                }
-                throw new Error("File doesn't exist.");
-            }).then((result) => {
-                body["sha"] = result.sha;
-                sendPost(url, data.access_token, body);
-            }).catch((error) => {
-                sendPost(url, data.access_token, body);
-            });
-
             chrome.storage.local.get("submission_data", (d) => {
                 let new_data = [];
                 if (d.submission_data) {
                     const submission_data = JSON.parse(d.submission_data).data;
-                    for (let sub of submission_data) {
-                        if (sub.problem_id === problemId) {
-                            return;
+                    const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
+                    if (same_problems.length > 0) {
+                        if (parseInt(same_problems[0].submission_id) < parseInt(id)) {
+                            commit(url, data.access_token, body);
+                            same_problems[0].submission_id = id;
+                            const obj = { data: submission_data };
+                            chrome.storage.local.set({submission_data: JSON.stringify(obj)});
                         }
+                        return;
                     }
+                    commit(url, data.access_token, body);
                     new_data = submission_data;
                 }
                 const new_sub = {
@@ -136,6 +126,23 @@ function upload(id, problem, problemUrl, cpu, language) {
             });
 
         });
+    });
+}
+
+function commit(url, token, body) {
+    fetch(url, {
+        method: "GET",
+        headers: { Authorization: `token ${token}` }
+    }).then((response) => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error("File doesn't exist.");
+    }).then((result) => {
+        body["sha"] = result.sha;
+        sendPost(url, token, body);
+    }).catch((error) => {
+        sendPost(url, token, body);
     });
 }
 
