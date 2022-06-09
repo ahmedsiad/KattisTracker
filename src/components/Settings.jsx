@@ -35,6 +35,7 @@ const Settings = (props) => {
                     for (let repo of res) {
                         repoNames.push({ name: repo.name, full_name: repo.full_name });
                     }
+                    repoNames.sort((a, b) => a.name.localeCompare(b.name));
                     setRepos([...repoNames]);
                 })
             }
@@ -61,6 +62,7 @@ const Settings = (props) => {
                     <FormControl variant="outlined" style={{ minWidth: "150px", textAlign: "left" }}>
                         <InputLabel>Repository</InputLabel>
                         <Select label="Repository" value={uploadRepo} onChange={handleRepoChange}>
+                            <MenuItem value={""}>None</MenuItem>
                             {repos.map((repo, idx) => (
                                 <MenuItem key={idx} value={repo.full_name}>{repo.name}</MenuItem>
                             ))}

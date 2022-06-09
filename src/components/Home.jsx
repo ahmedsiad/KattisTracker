@@ -1,4 +1,5 @@
-import { useState } from "react";
+/*global chrome*/
+import { useState, useEffect } from "react";
 import { BottomNavigation, BottomNavigationAction } from "@material-ui/core";
 import ShowChartIcon from "@material-ui/icons/ShowChart";
 import BarChartIcon from "@material-ui/icons/BarChart";
@@ -10,6 +11,14 @@ import Settings from "./Settings";
 
 const Home = (props) => {
     const [tab, setTab] = useState("chart");
+
+    useEffect(() => {
+        chrome.storage.local.get("repo_name", (data) => {
+            if (!(data && data.repo_name)) {
+                setTab("settings");
+            }
+        })
+    }, []);
 
     const onBottomChange = (event, newValue) => {
         setTab(newValue);
