@@ -62,68 +62,85 @@ function upload(id, problem, problemUrl, cpu, language) {
                 
                 const tle = elems.children[0].lastElementChild.innerHTML.trim();
                 const memory = elems.children[1].lastElementChild.innerHTML.trim();
-                const difficulty = elems.children[2].lastElementChild.firstElementChild.innerHTML.trim();
 
                 const authorElem = elems.children[4];
                 const authorExists = authorElem.children[0].innerText.trim() !== "Source";
                 const author = (authorExists) ? authorElem.children[1].innerText.trim() : "No author";
-                const source = (authorExists) ? elems.children[5].children[1].innerText.trim() : authorElem.children[1].innerText.trim();
+                const sourceElem = (authorExists) ? elems.children[5].children[1].firstElementChild : authorElem.children[1].firstElementChild;
+                const source = sourceElem.innerHTML.trim();
 
-                const fileTable = document.getElementsByClassName("file_source-content-file")[0];
-                const problemId = problemUrl.split("/").pop();
-                const submissionName = fileTable.firstElementChild.innerHTML.trim();
-                const fileExtension = "." + submissionName.split(".")[1];
-                const cm = comments[language];
+                fetch(sourceElem.href).then((response_source) => {
+                    return response_source.text();
+                }).then((res_source) => {
+                    const page_source = parser.parseFromString(res_source, "text/html");
 
-                const lines = document.getElementsByClassName("ace_line");
-                let codeStr = `${cm} ***${problem} Solution***\n`;
-                codeStr += `${cm} Difficulty: ${difficulty}\n`;
-                codeStr += `${cm} Time Limit: ${tle}, Memory Limit: ${memory}\n`;
-                codeStr += `${cm} CPU Time: ${cpu}\n`;
-                codeStr += `${cm} Author: ${author}\n`;
-                codeStr += `${cm} Source: ${source}\n`;
-                codeStr += `${cm} Link: ${problemUrl}\n\n\n`;
+                    const table_body = page_source.getElementsByTagName("tbody")[0];
+                    let difficulty = "1.0";
+                    let ratio = "50%";
 
-                for (let line of lines) {
-                    codeStr += line.innerText;
-                }
-                let url = `https://api.github.com/repos/${data.repo_name}/contents/${problemId}/${problemId + fileExtension}`;
-                let body = {
-                    message: `"${problem}", Difficulty: ${difficulty}, comitted via Kattis Tracker`,
-                    content: btoa(unescape(encodeURIComponent(codeStr)))
-                };
-
-                chrome.storage.local.get("submission_data", (d) => {
-                    let new_data = [];
-                    if (d && d.submission_data) {
-                        const submission_data = JSON.parse(d.submission_data).data;
-                        const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
-                        if (same_problems.length > 0) {
-                            if (parseInt(same_problems[0].submission_id) < parseInt(id)) {
-                                commit(url, data.access_token, body);
-                                same_problems[0].submission_id = id;
-                                const obj = { data: submission_data };
-                                chrome.storage.local.set({submission_data: JSON.stringify(obj)});
-                            }
-                            return;
+                    for (const problem_row of table_body.children) {
+                        if (problem_row.firstElementChild.firstElementChild.href === problemUrl) {
+                            difficulty = problem_row.children[6].firstElementChild.innerHTML.trim();
+                            ratio = problem_row.children[5].innerHTML.trim();
                         }
-                        new_data = submission_data;
                     }
-                    commit(url, data.access_token, body);
-                    const new_sub = {
-                        submission_id: id,
-                        problem_id: problemId,
-                        problem_name: problem,
-                        timestamp: Date.now(),
-                        language: language,
-                        difficulty: parseFloat(difficulty)
+
+                    const fileTable = document.getElementsByClassName("file_source-content-file")[0];
+                    const problemId = problemUrl.split("/").pop();
+                    const submissionName = fileTable.firstElementChild.innerHTML.trim();
+                    const fileExtension = "." + submissionName.split(".")[1];
+                    const cm = comments[language];
+    
+                    const lines = document.getElementsByClassName("ace_line");
+                    let codeStr = `${cm} ***${problem} Solution***\n`;
+                    codeStr += `${cm} Difficulty: ${difficulty}\n`;
+                    codeStr += `${cm} Time Limit: ${tle}, Memory Limit: ${memory}\n`;
+                    codeStr += `${cm} Acceptance: ${ratio}\n`;
+                    codeStr += `${cm} CPU Time: ${cpu}\n`;
+                    codeStr += `${cm} Author: ${author}\n`;
+                    codeStr += `${cm} Source: ${source}\n`;
+                    codeStr += `${cm} Link: ${problemUrl}\n\n\n`;
+    
+                    for (let line of lines) {
+                        codeStr += line.innerText;
+                    }
+                    let url = `https://api.github.com/repos/${data.repo_name}/contents/${problemId}/${problemId + fileExtension}`;
+                    let body = {
+                        message: `"${problem}", Difficulty: ${difficulty}, comitted via Kattis Tracker`,
+                        content: btoa(unescape(encodeURIComponent(codeStr)))
                     };
-                    new_data.push(new_sub);
-                    const obj = { data: new_data };
-
-                    chrome.storage.local.set({submission_data: JSON.stringify(obj)});
+    
+                    chrome.storage.local.get("submission_data", (d) => {
+                        let new_data = [];
+                        if (d && d.submission_data) {
+                            const submission_data = JSON.parse(d.submission_data).data;
+                            const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
+                            if (same_problems.length > 0) {
+                                if (parseInt(same_problems[0].submission_id) < parseInt(id)) {
+                                    commit(url, data.access_token, body);
+                                    same_problems[0].submission_id = id;
+                                    const obj = { data: submission_data };
+                                    chrome.storage.local.set({submission_data: JSON.stringify(obj)});
+                                }
+                                return;
+                            }
+                            new_data = submission_data;
+                        }
+                        commit(url, data.access_token, body);
+                        const new_sub = {
+                            submission_id: id,
+                            problem_id: problemId,
+                            problem_name: problem,
+                            timestamp: Date.now(),
+                            language: language,
+                            difficulty: parseFloat(difficulty)
+                        };
+                        new_data.push(new_sub);
+                        const obj = { data: new_data };
+    
+                        chrome.storage.local.set({submission_data: JSON.stringify(obj)});
+                    });
                 });
-
             });
         }
     });
