@@ -69,22 +69,10 @@ function upload(id, problem, problemUrl, cpu, language) {
                 const sourceElem = (authorExists) ? elems.children[5].children[1].firstElementChild : authorElem.children[1].firstElementChild;
                 const source = sourceElem.innerHTML.trim();
 
-                fetch(sourceElem.href).then((response_source) => {
-                    return response_source.text();
-                }).then((res_source) => {
-                    const page_source = parser.parseFromString(res_source, "text/html");
-
-                    const table_body = page_source.getElementsByTagName("tbody")[0];
-                    let difficulty = "1.0";
-                    let ratio = "50%";
-
-                    for (const problem_row of table_body.children) {
-                        if (problem_row.firstElementChild.firstElementChild.href === problemUrl) {
-                            difficulty = problem_row.children[6].firstElementChild.innerHTML.trim();
-                            ratio = problem_row.children[5].innerHTML.trim();
-                        }
-                    }
-
+                const difficultyPromise = findDifficulty(problemUrl, sourceElem.href);
+                difficultyPromise.then((result) => {
+                    const [difficulty, ratio] = result;
+                    
                     const fileTable = document.getElementsByClassName("file_source-content-file")[0];
                     const problemId = problemUrl.split("/").pop();
                     const submissionName = fileTable.firstElementChild.innerHTML.trim();
@@ -175,21 +163,32 @@ function sendPost(url, token, body) {
     });
 }
 
-function checkTimestamp(timestamp) {
-    const spl = timestamp.split(":");
+async function findDifficulty(problemUrl, sourceUrl) {
+    let page_count = 0;
+    const parser = new DOMParser();
+    let difficulty = null;
+    let ratio = null;
 
-    const current = Date.now() + 3600 * 2000;
-    const time = new Date(current);
-    const hoursNow = time.getUTCHours();
-    const minsNow = time.getUTCMinutes();
-    const secsNow = time.getUTCSeconds();
-    const hours = parseInt(spl[0]);
-    const mins = parseInt(spl[1]);
-    const secs = parseInt(spl[2]);
+    while (!difficulty) {
+        const response = await fetch(sourceUrl + `?page=${page_count}`);
+        const res = await response.text();
+        
+        const page = parser.parseFromString(res, "text/html");
 
-    const timeNow = hoursNow * 3600 + minsNow * 60 + secsNow;
-    const timeBefore = hours * 3600 + mins * 60 + secs;
-    console.log(timeNow, timeBefore);
-    if (timeNow - 60 < timeBefore) return true;
-    return false;
+        const table_body = page.getElementsByTagName("tbody")[0];
+        if (table_body.children.length === 0) {
+            difficulty = "1.0";
+            ratio = "50%";
+        }
+
+        for (const problem_row of table_body.children) {
+            if (problem_row.firstElementChild.firstElementChild.href === problemUrl) {
+                difficulty = problem_row.children[6].firstElementChild.innerHTML.trim();
+                ratio = problem_row.children[5].innerHTML.trim();
+            }
+        }
+
+        page_count += 1;
+    }
+    return [difficulty, ratio];
 }
