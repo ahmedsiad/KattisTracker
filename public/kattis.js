@@ -63,13 +63,26 @@ function upload(id, problem, problemUrl, cpu, language) {
                 const tle = elems.children[0].lastElementChild.innerHTML.trim();
                 const memory = elems.children[1].lastElementChild.innerHTML.trim();
 
-                const authorElem = elems.children[4];
-                const authorExists = authorElem.children[0].innerText.trim() !== "Source";
-                const author = (authorExists) ? authorElem.children[1].innerText.trim() : "No author";
-                const sourceElem = (authorExists) ? elems.children[5].children[1].firstElementChild : authorElem.children[1].firstElementChild;
-                const source = sourceElem.innerHTML.trim();
+                const row1 = elems.children[4];
+                const row2 = elems.children[5];
+                if (row2 === undefined) return;
+                let difficultyUrl;
+                let author = "No author";
+                let source = "No source";
+                if (row1.children[0].innerText.trim() === "Author") {
+                    author = row1.children[1].innerText.trim();
+                    difficultyUrl = row1.children[1].firstElementChild.href;
+                }
+                if (row1.children[0].innerText.trim() === "Source") {
+                    source = row1.children[1].innerText.trim();
+                    difficultyUrl = row1.children[1].firstElementChild.href;
+                }
+                if (row2.children[0].innerText.trim() === "Source") {
+                    source = row2.children[1].innerText.trim();
+                    difficultyUrl = row2.children[1].firstElementChild.href;
+                }
 
-                const difficultyPromise = findDifficulty(problemUrl, sourceElem.href);
+                const difficultyPromise = findDifficulty(problemUrl, difficultyUrl);
                 difficultyPromise.then((result) => {
                     const [difficulty, ratio] = result;
                     
