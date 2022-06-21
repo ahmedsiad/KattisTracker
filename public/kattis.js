@@ -51,99 +51,97 @@ function pollStatus() {
 function upload(id, problem, problemUrl, cpu, language) {
     clearInterval(intervalId);
     chrome.storage.local.get(["repo_name", "access_token"], (data) => {
-        if (data && data.access_token) {
-            fetch(problemUrl).then((response) => {
-                return response.text();
-            }).then((res) => {
-                const parser = new DOMParser();
-                const page = parser.parseFromString(res, "text/html");
-                
-                const elems = page.getElementsByClassName("attribute_list-book")[0];
-                
-                const tle = elems.children[0].lastElementChild.innerHTML.trim();
-                const memory = elems.children[1].lastElementChild.innerHTML.trim();
+        fetch(problemUrl).then((response) => {
+            return response.text();
+        }).then((res) => {
+            const parser = new DOMParser();
+            const page = parser.parseFromString(res, "text/html");
+            
+            const elems = page.getElementsByClassName("attribute_list-book")[0];
+            
+            const tle = elems.children[0].lastElementChild.innerHTML.trim();
+            const memory = elems.children[1].lastElementChild.innerHTML.trim();
 
-                const row1 = elems.children[4];
-                const row2 = elems.children[5];
-                if (row2 === undefined) return;
-                let difficultyUrl;
-                let author = "No author";
-                let source = "No source";
-                if (row1.children[0].innerText.trim() === "Author") {
-                    author = row1.children[1].innerText.trim();
-                    difficultyUrl = row1.children[1].firstElementChild.href;
-                }
-                if (row1.children[0].innerText.trim() === "Source") {
-                    source = row1.children[1].innerText.trim();
-                    difficultyUrl = row1.children[1].firstElementChild.href;
-                }
-                if (row2.children[0].innerText.trim() === "Source") {
-                    source = row2.children[1].innerText.trim();
-                    difficultyUrl = row2.children[1].firstElementChild.href;
-                }
+            const row1 = elems.children[4];
+            const row2 = elems.children[5];
+            if (row2 === undefined) return;
+            let difficultyUrl;
+            let author = "No author";
+            let source = "No source";
+            if (row1.children[0].innerText.trim() === "Author") {
+                author = row1.children[1].innerText.trim();
+                difficultyUrl = row1.children[1].firstElementChild.href;
+            }
+            if (row1.children[0].innerText.trim() === "Source") {
+                source = row1.children[1].innerText.trim();
+                difficultyUrl = row1.children[1].firstElementChild.href;
+            }
+            if (row2.children[0].innerText.trim() === "Source") {
+                source = row2.children[1].innerText.trim();
+                difficultyUrl = row2.children[1].firstElementChild.href;
+            }
 
-                const difficultyPromise = findDifficulty(problemUrl, difficultyUrl);
-                difficultyPromise.then((result) => {
-                    const [difficulty, ratio] = result;
-                    
-                    const fileTable = document.getElementsByClassName("file_source-content-file")[0];
-                    const problemId = problemUrl.split("/").pop();
-                    const submissionName = fileTable.firstElementChild.innerHTML.trim();
-                    const fileExtension = "." + submissionName.split(".")[1];
-                    const cm = comments[language];
-    
-                    const lines = document.getElementsByClassName("ace_line");
-                    let codeStr = `${cm} ***${problem} Solution***\n`;
-                    codeStr += `${cm} Difficulty: ${difficulty}\n`;
-                    codeStr += `${cm} Time Limit: ${tle}, Memory Limit: ${memory}\n`;
-                    codeStr += `${cm} Acceptance: ${ratio}\n`;
-                    codeStr += `${cm} CPU Time: ${cpu}\n`;
-                    codeStr += `${cm} Author: ${author}\n`;
-                    codeStr += `${cm} Source: ${source}\n`;
-                    codeStr += `${cm} Link: ${problemUrl}\n\n\n`;
-    
-                    for (let line of lines) {
-                        codeStr += line.innerText;
-                    }
-                    let url = `https://api.github.com/repos/${data.repo_name}/contents/${problemId}/${problemId + fileExtension}`;
-                    let body = {
-                        message: `"${problem}", Difficulty: ${difficulty}, comitted via Kattis Tracker`,
-                        content: btoa(unescape(encodeURIComponent(codeStr)))
-                    };
-    
-                    chrome.storage.local.get("submission_data", (d) => {
-                        let new_data = [];
-                        if (d && d.submission_data) {
-                            const submission_data = JSON.parse(d.submission_data).data;
-                            const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
-                            if (same_problems.length > 0) {
-                                if (parseInt(same_problems[0].submission_id) < parseInt(id)) {
-                                    commit(url, data.access_token, body);
-                                    same_problems[0].submission_id = id;
-                                    const obj = { data: submission_data };
-                                    chrome.storage.local.set({submission_data: JSON.stringify(obj)});
-                                }
-                                return;
+            const difficultyPromise = findDifficulty(problemUrl, difficultyUrl);
+            difficultyPromise.then((result) => {
+                const [difficulty, ratio] = result;
+                
+                const fileTable = document.getElementsByClassName("file_source-content-file")[0];
+                const problemId = problemUrl.split("/").pop();
+                const submissionName = fileTable.firstElementChild.innerHTML.trim();
+                const fileExtension = "." + submissionName.split(".")[1];
+                const cm = comments[language];
+
+                const lines = document.getElementsByClassName("ace_line");
+                let codeStr = `${cm} ***${problem} Solution***\n`;
+                codeStr += `${cm} Difficulty: ${difficulty}\n`;
+                codeStr += `${cm} Time Limit: ${tle}, Memory Limit: ${memory}\n`;
+                codeStr += `${cm} Acceptance: ${ratio}\n`;
+                codeStr += `${cm} CPU Time: ${cpu}\n`;
+                codeStr += `${cm} Author: ${author}\n`;
+                codeStr += `${cm} Source: ${source}\n`;
+                codeStr += `${cm} Link: ${problemUrl}\n\n\n`;
+
+                for (let line of lines) {
+                    codeStr += line.innerText;
+                }
+                let url = `https://api.github.com/repos/${data.repo_name}/contents/${problemId}/${problemId + fileExtension}`;
+                let body = {
+                    message: `"${problem}", Difficulty: ${difficulty}, comitted via Kattis Tracker`,
+                    content: btoa(unescape(encodeURIComponent(codeStr)))
+                };
+
+                chrome.storage.local.get("submission_data", (d) => {
+                    let new_data = [];
+                    if (d && d.submission_data) {
+                        const submission_data = JSON.parse(d.submission_data).data;
+                        const same_problems = submission_data.filter((sub) => sub.problem_id === problemId);
+                        if (same_problems.length > 0) {
+                            if (parseInt(same_problems[0].submission_id) < parseInt(id)) {
+                                commit(url, data.access_token, body);
+                                same_problems[0].submission_id = id;
+                                const obj = { data: submission_data };
+                                chrome.storage.local.set({submission_data: JSON.stringify(obj)});
                             }
-                            new_data = submission_data;
+                            return;
                         }
-                        commit(url, data.access_token, body);
-                        const new_sub = {
-                            submission_id: id,
-                            problem_id: problemId,
-                            problem_name: problem,
-                            timestamp: Date.now(),
-                            language: language,
-                            difficulty: parseFloat(difficulty)
-                        };
-                        new_data.push(new_sub);
-                        const obj = { data: new_data };
-    
-                        chrome.storage.local.set({submission_data: JSON.stringify(obj)});
-                    });
+                        new_data = submission_data;
+                    }
+                    commit(url, data.access_token, body);
+                    const new_sub = {
+                        submission_id: id,
+                        problem_id: problemId,
+                        problem_name: problem,
+                        timestamp: Date.now(),
+                        language: language,
+                        difficulty: parseFloat(difficulty)
+                    };
+                    new_data.push(new_sub);
+                    const obj = { data: new_data };
+
+                    chrome.storage.local.set({submission_data: JSON.stringify(obj)});
                 });
             });
-        }
+        });
     });
 }
 

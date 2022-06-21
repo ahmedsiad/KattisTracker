@@ -13,8 +13,8 @@ const Home = (props) => {
     const [tab, setTab] = useState("chart");
 
     useEffect(() => {
-        chrome.storage.local.get("repo_name", (data) => {
-            if (!(data && data.repo_name)) {
+        chrome.storage.local.get(["repo_name", "access_token"], (data) => {
+            if (data && data.access_token && !data.repo_name) {
                 setTab("settings");
             }
         })
@@ -35,7 +35,7 @@ const Home = (props) => {
 
             {tab === "chart" ? <Chart /> : null}
             {tab === "stats" ? <Stats /> : null}
-            {tab === "settings" ? <Settings /> : null}
+            {tab === "settings" ? <Settings authorized={props.authorized} /> : null}
 
         </div>
     );
