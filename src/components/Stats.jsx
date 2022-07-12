@@ -58,8 +58,8 @@ const Stats = (props) => {
                 for (let i = 0; i < raw.length; i++) {
                     const prob = raw[i];
 
-                    if (prob.difficulty >= 5) hards++;
-                    else if (prob.difficulty >= 3) meds++;
+                    if (prob.difficulty >= 2.8) hards++;
+                    else if (prob.difficulty >= 5.5) meds++;
                     else easys++;
 
                     if (prob.difficulty > hardest) {
@@ -132,17 +132,17 @@ const Stats = (props) => {
                     <Grid container spacing={2} style={{ width: "100%", margin: 0, marginTop: "15px", textAlign: "center" }}>
                         <Grid item xs={1} />
                         <Grid item xs={3}>
-                            <Tooltip title="Difficulty less than 3.0" arrow placement="top">
+                            <Tooltip title="Difficulty less than 2.8" arrow placement="top">
                                 <Typography><GreenText component="span">Easys</GreenText></Typography>
                             </Tooltip>
                         </Grid>
                         <Grid item xs={4}>
-                            <Tooltip title="Difficulty between 3.0 and 5.0" arrow placement="top">
+                            <Tooltip title="Difficulty between 2.8 and 5.4" arrow placement="top">
                                 <Typography><YellowText component="span">Mediums</YellowText></Typography>
                             </Tooltip>
                         </Grid>
                         <Grid item xs={3}>
-                            <Tooltip title="Difficulty greater than 5.0" arrow placement="top">
+                            <Tooltip title="Difficulty greater than 5.4" arrow placement="top">
                                 <Typography><RedText component="span">Hards</RedText></Typography>
                             </Tooltip>
                         </Grid>

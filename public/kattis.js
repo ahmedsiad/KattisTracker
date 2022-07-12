@@ -62,26 +62,23 @@ function upload(id, problem, problemUrl, cpu, language) {
             const tle = elems.children[0].lastElementChild.innerHTML.trim();
             const memory = elems.children[1].lastElementChild.innerHTML.trim();
 
-            const row1 = elems.children[4];
-            const row2 = elems.children[5];
+            const row1 = elems.children[5];
+            const row2 = elems.children[6];
             if (row2 === undefined) return;
-            let difficultyUrl;
+            let difficultyUrl = "https://open.kattis.com/problems";
             let author = "No author";
             let source = "No source";
             if (row1.children[0].innerText.trim() === "Author") {
                 author = row1.children[1].innerText.trim();
-                difficultyUrl = row1.children[1].firstElementChild.href;
             }
             if (row1.children[0].innerText.trim() === "Source") {
                 source = row1.children[1].innerText.trim();
-                difficultyUrl = row1.children[1].firstElementChild.href;
             }
             if (row2.children[0].innerText.trim() === "Source") {
                 source = row2.children[1].innerText.trim();
-                difficultyUrl = row2.children[1].firstElementChild.href;
             }
 
-            const difficultyPromise = findDifficulty(problemUrl, difficultyUrl);
+            const difficultyPromise = findDifficulty(problem, problemUrl, difficultyUrl);
             difficultyPromise.then((result) => {
                 const [difficulty, ratio] = result;
                 
@@ -174,14 +171,18 @@ function sendPost(url, token, body) {
     });
 }
 
-async function findDifficulty(problemUrl, sourceUrl) {
-    let page_count = 0;
+async function findDifficulty(problemName, problemUrl, sourceUrl) {
     const parser = new DOMParser();
     let difficulty = null;
     let ratio = null;
+    let lower = 0;
+    let upper = 34;
 
+    // binary search
     while (!difficulty) {
-        const response = await fetch(sourceUrl + `?page=${page_count}`);
+        let mid = Math.floor((lower + upper) / 2);
+
+        const response = await fetch(sourceUrl + `?page=${mid}`);
         const res = await response.text();
         
         const page = parser.parseFromString(res, "text/html");
@@ -192,14 +193,24 @@ async function findDifficulty(problemUrl, sourceUrl) {
             ratio = "50%";
         }
 
+        let isSmaller = true;
         for (const problem_row of table_body.children) {
             if (problem_row.firstElementChild.firstElementChild.href === problemUrl) {
-                difficulty = problem_row.children[6].firstElementChild.innerHTML.trim();
+                difficulty = problem_row.children[6].firstElementChild.innerHTML.split(" ")[0];
                 ratio = problem_row.children[5].innerHTML.trim();
+            } else if (problem_row.firstElementChild.firstElementChild.innerText.localeCompare(problemName) === -1) {
+                isSmaller = false;
             }
         }
 
-        page_count += 1;
+        if (!difficulty) {
+            if (isSmaller) {
+                upper = mid - 1;
+            } else {
+                lower = mid + 1;
+            }
+        }
     }
+
     return [difficulty, ratio];
 }
