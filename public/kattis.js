@@ -33,7 +33,7 @@ function pollStatus() {
     const tableBody = judgeTable.getElementsByTagName("tbody")[0].firstElementChild;
     const statusText = tableBody.children[3].innerText;
     if (statusText.startsWith("Accepted")) {
-        const id = tableBody.children[0].innerText;
+        const id = tableBody.getAttribute("data-submission-id");
         const timestamp = tableBody.children[1].innerText;
         const problem = tableBody.children[2].innerText;
         const problemUrl = tableBody.children[2].firstElementChild.href;
@@ -62,8 +62,8 @@ function upload(id, problem, problemUrl, cpu, language) {
             const tle = elems.children[0].lastElementChild.innerHTML.trim();
             const memory = elems.children[1].lastElementChild.innerHTML.trim();
 
-            const row1 = elems.children[5];
-            const row2 = elems.children[6];
+            const row1 = elems.children[6];
+            const row2 = elems.children[7];
             if (row2 === undefined) return;
             let difficultyUrl = "https://open.kattis.com/problems";
             let author = "No author";
@@ -196,8 +196,8 @@ async function findDifficulty(problemName, problemUrl, sourceUrl) {
         let isSmaller = true;
         for (const problem_row of table_body.children) {
             if (problem_row.firstElementChild.firstElementChild.href === problemUrl) {
-                difficulty = problem_row.children[6].firstElementChild.innerHTML.split(" ")[0];
-                ratio = problem_row.children[5].innerHTML.trim();
+                difficulty = problem_row.children[7].firstElementChild.innerHTML.split(" ")[0];
+                ratio = problem_row.children[6].innerHTML.trim();
             } else if (problem_row.firstElementChild.firstElementChild.innerText.localeCompare(problemName) === -1) {
                 isSmaller = false;
             }
